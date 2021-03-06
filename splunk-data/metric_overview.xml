@@ -1,0 +1,69 @@
+<form>
+  <label>Metrikübersicht</label>
+  <fieldset autoRun="true" submitButton="false">
+    <input type="dropdown" token="time_earliest" searchWhenChanged="true">
+      <label>Zeitraum</label>
+      <choice value="-7d@h">Letzte 7 Tage</choice>
+      <choice value="-24h@h">Letzte 24 Stunden</choice>
+      <choice value="-4h@h">Letzte 4 Stunden</choice>
+      <choice value="-60m@m">Letzte 60 Minuten</choice>
+      <choice value="-15m@m">Letzte 15 Minuten</choice>
+      <change>
+        <condition value="-7d@h">
+          <set token="time_span">12h</set>
+        </condition>
+        <condition value="-24h@h">
+          <set token="time_span">1h</set>
+        </condition>
+        <condition value="-4h@h">
+          <set token="time_span">15m</set>
+        </condition>
+        <condition value="-60m@m">
+          <set token="time_span">5m</set>
+        </condition>
+        <condition value="-15m@m">
+          <set token="time_span">1m</set>
+        </condition>
+      </change>
+      <default>-24h@h</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Produktanzahl</title>
+      <chart>
+        <search>
+          <query>sourcetype="metric" name="itemCount" sum&gt;0 | timechart avg(sum) span=$time_span$ as avg_sum | eval "dursch. Produktanzahl" = round(avg_sum, 2) | fields - avg_sum</query>
+          <earliest>$time_earliest$</earliest>
+          <latest>now</latest>
+          <refresh>1m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="charting.axisY.minimumNumber">0</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Fehleranzahl</title>
+      <chart>
+        <search>
+          <query>sourcetype="metric" name="errorCount" labels.name="*" | stats first(_time) as _time first(value) as value first(labels.name) as name by shoppingCartId | timechart sum(value) span=$time_span$ by name</query>
+          <earliest>$time_earliest$</earliest>
+          <latest>now</latest>
+          <refresh>1m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+</form>

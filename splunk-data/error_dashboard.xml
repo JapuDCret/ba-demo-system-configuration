@@ -1,0 +1,81 @@
+<form theme="light">
+  <label>Fehlerübersicht</label>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="time_field">
+      <label>Zeitraum</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="browser_field">
+      <label>Browser</label>
+      <change>
+        <condition match="isnull($value$)">
+          <eval token="browserFilter">*</eval>
+        </condition>
+        <condition>
+          <eval token="browserFilter">$value$</eval>
+        </condition>
+      </change>
+      <default>*</default>
+      <initialValue>*</initialValue>
+      <choice value="*">*</choice>
+      <fieldForLabel>capabilities.browser</fieldForLabel>
+      <fieldForValue>capabilities.browser</fieldForValue>
+      <search>
+        <query>sourcetype="error" | top limit=20 capabilities.browser</query>
+      </search>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Histogramm der aufgetretenen Fehler</title>
+      <chart>
+        <title>Fehlerevents</title>
+        <search>
+          <query>sourcetype="error" capabilities.browser=$browserFilter$ | timechart count(message) by message</query>
+          <earliest>$time_field.earliest$</earliest>
+          <latest>$time_field.latest$</latest>
+          <refresh>1m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Top 20 Fehler</title>
+        <search>
+          <query>sourcetype="error" capabilities.browser=$browserFilter$ name, message | top limit=20 name, message</query>
+          <earliest>$time_field.earliest$</earliest>
+          <latest>$time_field.latest$</latest>
+          <refresh>1m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <event>
+        <title>Events (max. 50)</title>
+        <search>
+          <query>sourcetype="error" capabilities.browser=$browserFilter$ | sort _time | head 50</query>
+          <earliest>$time_field.earliest$</earliest>
+          <latest>$time_field.latest$</latest>
+          <refresh>1m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="list.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </event>
+    </panel>
+  </row>
+</form>
